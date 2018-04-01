@@ -15,7 +15,7 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
         public float repeatingBroadcastInterval;
         public float repeatingBroadcastStayTime;
 
-        [XmlArray(ElementName = "message")]
+        [XmlArrayItem(ElementName = "message")]
         public List<string> broadcastMessages;
 
         public void LoadDefaults()

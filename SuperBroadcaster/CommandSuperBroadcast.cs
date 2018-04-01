@@ -13,7 +13,7 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
     {
         #region Properties
 
-        public AllowedCaller AllowedCaller => AllowedCaller.Player;
+        public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
         public string Name => "superbroadcast";
 
