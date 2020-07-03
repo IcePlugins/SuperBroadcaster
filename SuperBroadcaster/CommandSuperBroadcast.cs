@@ -7,6 +7,8 @@ using UnityEngine;
 using SDG.Unturned;
 using System;
 
+using Logger = Rocket.Core.Logging.Logger;
+
 namespace ExtraConcentratedJuice.SuperBroadcaster
 {
     public class CommandSuperBroadcast : IRocketCommand
@@ -29,16 +31,15 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
 
         public void Execute(IRocketPlayer caller, string[] args)
         {
-            SteamPlayer steamPlayer = PlayerTool.getSteamPlayer(ulong.Parse(caller.Id));
             if (args.Length < 1 || args.Length > 2)
             {
-                ChatManager.serverSendMessage(Syntax, Color.red, toPlayer: steamPlayer);
+                TellUser(caller, Syntax, Color.red);
                 return;
             }
 
             if (SuperBroadcaster.instance.isActive)
             {
-                ChatManager.serverSendMessage(SuperBroadcaster.instance.Translate("is_active"), Color.red, toPlayer: steamPlayer);
+                TellUser(caller, SuperBroadcaster.instance.Translate("is_active"), Color.red);
                 return;
             }
 
@@ -51,22 +52,34 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
                 {
                     if (!float.TryParse(args[1], out float time))
                     {
-                        ChatManager.serverSendMessage(Syntax, Color.red, toPlayer: steamPlayer);
+                        TellUser(caller, Syntax, Color.red);
                         return;
                     }
                     float limit = SuperBroadcaster.instance.Configuration.Instance.broadcastTimeLimit;
 
                     if (limit > 0 && time > limit)
                     {
-                        ChatManager.serverSendMessage(SuperBroadcaster.instance.Translate("too_long"), Color.red, toPlayer: steamPlayer);
+                        TellUser(caller, SuperBroadcaster.instance.Translate("too_long"), Color.red);
                         return;
                     }
 
-                    ChatManager.serverSendMessage(SuperBroadcaster.instance.Translate("success"), Palette.SERVER, toPlayer: steamPlayer);
+                    TellUser(caller, SuperBroadcaster.instance.Translate("success"), Palette.SERVER);
                     SuperBroadcaster.instance.StartBroadcast(time, args[0]);
                     break;
                 }
             }
+        }
+
+        private void TellUser(IRocketPlayer caller, string message, Color color)
+        {
+            if (caller.Id == "Console")
+            {
+                Logger.Log(message);
+                return;
+            }
+            
+            SteamPlayer steamPlayer = PlayerTool.getSteamPlayer(ulong.Parse(caller.Id));
+            ChatManager.serverSendMessage(message, color, toPlayer: steamPlayer);
         }
     }
 }
