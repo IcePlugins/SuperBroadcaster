@@ -13,13 +13,13 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
     {
         public static SuperBroadcaster instance;
         public bool isActive;
-        private int broadcastIndex;
+        private int m_broadcastIndex;
 
         protected override void Load()
         {
             instance = this;
             isActive = false;
-            broadcastIndex = 0;
+            m_broadcastIndex = 0;
 
             if (Configuration.Instance.repeatingBroadcastInterval > 0)
                 StartCoroutine(BroadcastCoroutine(Configuration.Instance.repeatingBroadcastInterval));
@@ -29,9 +29,8 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
         {
             StopAllCoroutines();
 
-            foreach(SteamPlayer x in Provider.clients)
-                if (x != null)
-                    EffectManager.askEffectClearByID(Configuration.Instance.effectId, x.playerID.steamID);
+            foreach (var player in Provider.clients.Where(x => x != null))
+                EffectManager.askEffectClearByID(Configuration.Instance.effectId, player.playerID.steamID);
 
             isActive = false;
         }
@@ -45,37 +44,33 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
                 if (isActive)
                     yield return new WaitForSeconds(time);
 
-                string message = Configuration.Instance.broadcastMessages[broadcastIndex];
+                string message = Configuration.Instance.broadcastMessages[m_broadcastIndex];
 
                 StartBroadcast(Configuration.Instance.repeatingBroadcastStayTime, message);
 
-                if (++broadcastIndex >= Configuration.Instance.broadcastMessages.Count)
-                    broadcastIndex = 0;
+                if (++m_broadcastIndex >= Configuration.Instance.broadcastMessages.Count)
+                    m_broadcastIndex = 0;
             }
+        }
+
+        private IEnumerator ClearEffectCoroutine(float time)
+        {
+            yield return new WaitForSeconds(time);
+
+            foreach (SteamPlayer player in Provider.clients.Where(x => x != null))
+                EffectManager.askEffectClearByID(Configuration.Instance.effectId, player.playerID.steamID);
+
+            isActive = false;
         }
 
         public void StartBroadcast(float time, string message)
         {
-            foreach (SteamPlayer x in Provider.clients)
-                if (x != null)
-                    EffectManager.sendUIEffect(Configuration.Instance.effectId, 4205, x.playerID.steamID, true, message);
+            foreach (var player in Provider.clients.Where(x => x != null))
+                EffectManager.sendUIEffect(Configuration.Instance.effectId, 4205, player.playerID.steamID, true, message);
 
             isActive = true;
 
-            StartCoroutine(DelayedInvoke(time, () =>
-            {
-                foreach (SteamPlayer x in Provider.clients)
-                    if (x != null)
-                        EffectManager.askEffectClearByID(Configuration.Instance.effectId, x.playerID.steamID);
-
-                isActive = false;
-            }));
-        }
-
-        private IEnumerator DelayedInvoke(float time, System.Action action)
-        {
-            yield return new WaitForSeconds(time);
-            action();
+            StartCoroutine(ClearEffectCoroutine(time));
         }
 
         public override TranslationList DefaultTranslations =>

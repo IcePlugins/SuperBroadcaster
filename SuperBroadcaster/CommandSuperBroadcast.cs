@@ -29,40 +29,43 @@ namespace ExtraConcentratedJuice.SuperBroadcaster
 
         public void Execute(IRocketPlayer caller, string[] args)
         {
+            SteamPlayer steamPlayer = PlayerTool.getSteamPlayer(ulong.Parse(caller.Id));
             if (args.Length < 1 || args.Length > 2)
             {
-                UnturnedChat.Say(caller, Syntax, Color.red);
+                ChatManager.serverSendMessage(Syntax, Color.red, toPlayer: steamPlayer);
                 return;
             }
 
             if (SuperBroadcaster.instance.isActive)
             {
-                UnturnedChat.Say(caller, SuperBroadcaster.instance.Translate("is_active"), Color.red);
+                ChatManager.serverSendMessage(SuperBroadcaster.instance.Translate("is_active"), Color.red, toPlayer: steamPlayer);
                 return;
             }
 
-            if (args.Length == 1)
+            switch (args.Length)
             {
-                SuperBroadcaster.instance.StartBroadcast(SuperBroadcaster.instance.Configuration.Instance.defaultBroadcastDuration, args[0]);
-            }
-
-            if (args.Length == 2)
-            {
-                if (!float.TryParse(args[1], out float time))
+                case 1:
+                    SuperBroadcaster.instance.StartBroadcast(SuperBroadcaster.instance.Configuration.Instance.defaultBroadcastDuration, args[0]);
+                    break;
+                case 2:
                 {
-                    UnturnedChat.Say(caller, Syntax, Color.red);
-                    return;
-                }
-                float limit = SuperBroadcaster.instance.Configuration.Instance.broadcastTimeLimit;
+                    if (!float.TryParse(args[1], out float time))
+                    {
+                        ChatManager.serverSendMessage(Syntax, Color.red, toPlayer: steamPlayer);
+                        return;
+                    }
+                    float limit = SuperBroadcaster.instance.Configuration.Instance.broadcastTimeLimit;
 
-                if (limit > 0 && time > limit)
-                {
-                    UnturnedChat.Say(caller, SuperBroadcaster.instance.Translate("too_long"), Color.red);
-                    return;
-                }
+                    if (limit > 0 && time > limit)
+                    {
+                        ChatManager.serverSendMessage(SuperBroadcaster.instance.Translate("too_long"), Color.red, toPlayer: steamPlayer);
+                        return;
+                    }
 
-                UnturnedChat.Say(caller, SuperBroadcaster.instance.Translate("success"));
-                SuperBroadcaster.instance.StartBroadcast(time, args[0]);
+                    ChatManager.serverSendMessage(SuperBroadcaster.instance.Translate("success"), Palette.SERVER, toPlayer: steamPlayer);
+                    SuperBroadcaster.instance.StartBroadcast(time, args[0]);
+                    break;
+                }
             }
         }
     }
